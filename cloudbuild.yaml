@@ -1,0 +1,27 @@
+steps:
+  # Docker imajını oluştur
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/redata-app', '.']
+  
+  # Imajı Container Registry'ye yükle
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/redata-app']
+  
+  # Cloud Run'a deploy et
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'redata-service'      # Servis adınız (değiştirebilirsiniz)
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/redata-app'
+      - '--region'
+      - 'europe-west1'        # Bölge (değiştirebilirsiniz)
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+# --- İŞTE O SİHİRLİ AYAR BURASI ---
+options:
+  logging: CLOUD_LOGGING_ONLY
