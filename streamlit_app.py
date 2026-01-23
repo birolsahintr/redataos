@@ -1,45 +1,57 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# 1. Sayfa Ayarları (Geniş ekran modu)
-st.set_page_config(layout="wide", page_title="ReData - Kurumsal Hafıza")
+# 1. SAYFA AYARLARI
+# 'layout="wide"' sitenin sağa sola yayılmasını sağlar.
+# 'initial_sidebar_state="collapsed"' Streamlit'in sol menüsünü kapatır.
+st.set_page_config(
+    page_title="ReData - Kurumsal Hafıza",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# 2. Streamlit'in kendi menülerini gizle (Sadece sizin tasarımınız görünsün)
+# 2. CSS HACK (Tasarım Bozukluğunu Gideren Kısım)
+# Bu kod Streamlit'in üst, alt ve yan boşluklarını tamamen siler.
 st.markdown("""
     <style>
-        /* Kenar boşluklarını sıfırla */
+        /* Ana içerik kapsayıcısının boşluklarını sıfırla */
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
             padding-left: 0rem !important;
             padding-right: 0rem !important;
+            margin: 0px !important;
             max-width: 100% !important;
         }
         
-        /* Streamlit elementlerini gizle */
-        header {visibility: hidden;}
-        footer {visibility: hidden;}
-        #MainMenu {visibility: hidden;}
-        .stDeployButton {display:none;}
-        [data-testid="stToolbar"] {display: none;}
+        /* Streamlit'in üst menüsünü (Hamburger menü) gizle */
+        #MainMenu { visibility: hidden; }
+        header { visibility: hidden; }
         
-        /* İframe'i tam ekran yap */
+        /* Alt bilgiyi (Footer) gizle */
+        footer { visibility: hidden; }
+        
+        /* "Deploy" butonunu gizle */
+        .stDeployButton { display: none; }
+        
+        /* iframe'in etrafındaki border'ı kaldır */
         iframe {
-            display: block;
-            border: none;
-            width: 100%;
-            height: 100vh;
+            border: none !important;
+            width: 100% !important;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. index.html dosyasını bul, oku ve çalıştır
+# 3. HTML DOSYASINI OKU VE YÜKLE
 try:
     with open("index.html", "r", encoding="utf-8") as f:
         html_code = f.read()
-        
-    # Sitenizi ekrana basıyoruz (Yüksekliği 1000px veya daha fazla yapabilirsiniz)
-    components.html(html_code, height=1000, scrolling=True)
+    
+    # height=1200: Sitenin dikey boyutu. 
+    # Eğer sayfanızda scroll (kaydırma) çıkıyorsa bu sayıyı artırın (örn: 1500).
+    components.html(html_code, height=1200, scrolling=True)
 
 except FileNotFoundError:
-    st.error("HATA: index.html dosyası bulunamadı! Lütfen GitHub'da app.py ile index.html'in yan yana olduğundan emin olun.")
+    # Dosya bulunamazsa hata yerine bilgi verelim
+    st.error("⚠️ 'index.html' dosyası bulunamadı. Lütfen GitHub'a app.py ile aynı yere yüklediğinizden emin olun.")
