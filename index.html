@@ -1,91 +1,73 @@
+import streamlit as st
+import google.generativeai as genai
+import streamlit.components.v1 as components  # HTML göstermek için gerekli modül
 
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ReData - Kurumsal Gayrimenkul Hafıza Sistemi</title>
-  
-  <!-- SEO & Canonical -->
-  <link rel="canonical" href="https://www.redata.tr" />
-  <meta name="description" content="ReData - Gayrimenkul ofisleri için akıllı veri yönetimi, tapu analizi ve kurumsal hafıza sistemi. Bilgiyi güce dönüştürün.">
-  
-  <!-- PWA & Mobile Optimization -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0054A6">
-  <meta name="mobile-web-app-capable" content="yes">
-  
-  <!-- iOS / iPhone Specific Tags -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ReData">
-  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9446/9446950.png">
-  
-  <!-- Splash Screen Simulation for iOS -->
-  <link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/9446/9446950.png">
+# 1. Sayfa Ayarları
+st.set_page_config(page_title="Gayrimenkul Asistanı", layout="centered")
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  
-  <style>
-    body { 
-      font-family: 'Inter', sans-serif; 
-      overscroll-behavior-y: contain;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .leaflet-container {
-      width: 100%;
-      height: 100%;
-      border-radius: 1rem;
-      z-index: 1;
-    }
-    .bg-remax-red { background-color: #E11B22; }
-    .bg-remax-blue { background-color: #0054A6; }
-    .text-remax-red { color: #E11B22; }
-    .text-remax-blue { color: #0054A6; }
-    .border-remax-red { border-color: #E11B22; }
-    .border-remax-blue { border-color: #0054A6; }
+# --- MANTIK: GİRİŞ EKRANI MI, SOHBET EKRANI MI? ---
+if "page" not in st.session_state:
+    st.session_state.page = "landing"
 
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 10px;
-    }
-  </style>
+# --- DURUM 1: LANDING PAGE (index.html Gösterimi) ---
+if st.session_state.page == "landing":
+    # index.html dosyasını okuyup ekrana basıyoruz
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            html_code = f.read()
+            
+        # HTML'i ekrana bas (height değerini HTML'inizin uzunluğuna göre ayarlayın)
+        components.html(html_code, height=600, scrolling=True)
+        
+        # Sohbet uygulamasına geçiş butonu
+        # (Butonu ortalamak için kolon kullanıyoruz)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🤖 Asistanı Başlat", use_container_width=True):
+                st.session_state.page = "chat"
+                st.rerun() # Sayfayı yenileyip chat moduna geçirir
+                
+    except FileNotFoundError:
+        st.error("index.html dosyası bulunamadı! Lütfen app.py ile aynı klasörde olduğundan emin olun.")
 
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "recharts": "https://esm.sh/recharts@^2.12.0",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
-}
-</script>
-</head>
-<body class="bg-slate-50 text-slate-900">
-  <div id="root"></div>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('SW Registered', reg))
-          .catch(err => console.log('SW Error', err));
-      });
-    }
-  </script>
-</body>
-</html>
+# --- DURUM 2: SOHBET UYGULAMASI (Sizin Kodunuz) ---
+elif st.session_state.page == "chat":
+    
+    st.title("🏗️ Gayrimenkul Yönetim Asistanı")
+    
+    # Geri Dön Butonu (İsterseniz ekleyebilirsiniz)
+    if st.button("⬅️ Ana Sayfaya Dön"):
+        st.session_state.page = "landing"
+        st.rerun()
+
+    # --- API ve CHAT KODLARINIZ BURADAN DEVAM EDİYOR ---
+    if "GOOGLE_API_KEY" not in st.secrets:
+        st.error("Lütfen secrets.toml dosyasını kontrol edin.")
+        st.stop()
+
+    api_key = st.secrets["GOOGLE_API_KEY"]
+    genai.configure(api_key=api_key)
+
+    system_instruction = "Sen, bulut tabanlı bir Gayrimenkul Portföy yönetim modülüsün."
+    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_instruction)
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["parts"][0])
+
+    if prompt := st.chat_input("Sorunuzu girin..."):
+        st.chat_message("user").markdown(prompt)
+        st.session_state.messages.append({"role": "user", "parts": [prompt]})
+
+        try:
+            with st.spinner("Düşünüyor..."):
+                response = model.generate_content(st.session_state.messages)
+                text_response = response.text
+            
+            st.chat_message("ai").markdown(text_response)
+            st.session_state.messages.append({"role": "model", "parts": [text_response]})
+        except Exception as e:
+            st.error(f"Hata: {e}")
