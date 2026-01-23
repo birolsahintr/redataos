@@ -1,73 +1,51 @@
 import streamlit as st
-import google.generativeai as genai
-import streamlit.components.v1 as components  # HTML göstermek için gerekli modül
+import streamlit.components.v1 as components
 
-# 1. Sayfa Ayarları
-st.set_page_config(page_title="Gayrimenkul Asistanı", layout="centered")
+# 1. Sayfa Ayarları (Geniş Mod)
+st.set_page_config(
+    page_title="ReData - Kurumsal Hafıza",
+    page_icon="🏢",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# --- MANTIK: GİRİŞ EKRANI MI, SOHBET EKRANI MI? ---
-if "page" not in st.session_state:
-    st.session_state.page = "landing"
-
-# --- DURUM 1: LANDING PAGE (index.html Gösterimi) ---
-if st.session_state.page == "landing":
-    # index.html dosyasını okuyup ekrana basıyoruz
-    try:
-        with open("index.html", "r", encoding="utf-8") as f:
-            html_code = f.read()
-            
-        # HTML'i ekrana bas (height değerini HTML'inizin uzunluğuna göre ayarlayın)
-        components.html(html_code, height=600, scrolling=True)
+# 2. Streamlit Arayüzünü Tamamen Gizleme (CSS Hack)
+# Bu kod üstteki boşluğu, menüyü ve footer'ı yok eder.
+st.markdown("""
+    <style>
+        /* Ana kapsayıcıdaki boşlukları kaldır */
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0rem !important;
+            padding-right: 0rem !important;
+            max-width: 100% !important;
+        }
         
-        # Sohbet uygulamasına geçiş butonu
-        # (Butonu ortalamak için kolon kullanıyoruz)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🤖 Asistanı Başlat", use_container_width=True):
-                st.session_state.page = "chat"
-                st.rerun() # Sayfayı yenileyip chat moduna geçirir
-                
-    except FileNotFoundError:
-        st.error("index.html dosyası bulunamadı! Lütfen app.py ile aynı klasörde olduğundan emin olun.")
+        /* Streamlit elementlerini gizle */
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
+        .stDeployButton {display:none;}
+        [data-testid="stToolbar"] {display: none;}
+        
+        /* İframe'i tam ekran yap */
+        iframe {
+            display: block;
+            border: none;
+            width: 100%;
+            height: 100vh; /* Ekran yüksekliği kadar */
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# --- DURUM 2: SOHBET UYGULAMASI (Sizin Kodunuz) ---
-elif st.session_state.page == "chat":
-    
-    st.title("🏗️ Gayrimenkul Yönetim Asistanı")
-    
-    # Geri Dön Butonu (İsterseniz ekleyebilirsiniz)
-    if st.button("⬅️ Ana Sayfaya Dön"):
-        st.session_state.page = "landing"
-        st.rerun()
+# 3. HTML Dosyasını Oku ve Bas
+try:
+    with open("index.html", "r", encoding="utf-8") as f:
+        html_code = f.read()
+        
+    # Yüksekliği ekran boyuna (viewport height) eşitliyoruz
+    components.html(html_code, height=1000, scrolling=True)
 
-    # --- API ve CHAT KODLARINIZ BURADAN DEVAM EDİYOR ---
-    if "GOOGLE_API_KEY" not in st.secrets:
-        st.error("Lütfen secrets.toml dosyasını kontrol edin.")
-        st.stop()
-
-    api_key = st.secrets["GOOGLE_API_KEY"]
-    genai.configure(api_key=api_key)
-
-    system_instruction = "Sen, bulut tabanlı bir Gayrimenkul Portföy yönetim modülüsün."
-    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_instruction)
-
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["parts"][0])
-
-    if prompt := st.chat_input("Sorunuzu girin..."):
-        st.chat_message("user").markdown(prompt)
-        st.session_state.messages.append({"role": "user", "parts": [prompt]})
-
-        try:
-            with st.spinner("Düşünüyor..."):
-                response = model.generate_content(st.session_state.messages)
-                text_response = response.text
-            
-            st.chat_message("ai").markdown(text_response)
-            st.session_state.messages.append({"role": "model", "parts": [text_response]})
-        except Exception as e:
-            st.error(f"Hata: {e}")
+except FileNotFoundError:
+    st.error("HATA: index.html dosyası app.py ile aynı klasörde bulunamadı.")
