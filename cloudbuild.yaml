@@ -1,27 +1,131 @@
-steps:
-  # Docker imajını oluştur
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/redata-app', '.']
-  
-  # Imajı Container Registry'ye yükle
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/redata-app']
-  
-  # Cloud Run'a deploy et
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'redata-service'      # Servis adınız (değiştirebilirsiniz)
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/redata-app'
-      - '--region'
-      - 'europe-west1'        # Bölge (değiştirebilirsiniz)
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-
-# --- İŞTE O SİHİRLİ AYAR BURASI ---
-options:
-  logging: CLOUD_LOGGING_ONLY
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: redata-v3
+  namespace: '400713679682'
+  selfLink: /apis/serving.knative.dev/v1/namespaces/400713679682/services/redata-v3
+  uid: a24db3fa-d706-45dd-965d-e18d06c462dc
+  resourceVersion: AAZJBfSz/Jw
+  generation: 3
+  creationTimestamp: '2026-01-23T03:37:25.650703Z'
+  labels:
+    commit-sha: 848ca26e23f81e751b0198fcf18918612cd0771c
+    gcb-build-id: a8b7aa76-5934-418b-a042-0d5ed443aa12
+    gcb-trigger-id: df2fe93e-fc30-48cb-97fc-928a82a1ac3d
+    gcb-trigger-region: global
+    managed-by: gcp-cloud-build-deploy-cloud-run
+    cloud.googleapis.com/location: us-west1
+  annotations:
+    run.googleapis.com/ingress: all
+    serving.knative.dev/creator: shnbrl@gmail.com
+    serving.knative.dev/lastModifier: 400713679682-compute@developer.gserviceaccount.com
+    generativelanguage.googleapis.com/type: applet
+    run.googleapis.com/build-enable-automatic-updates: 'false'
+    run.googleapis.com/build-source-location: gs://ai-studio-bucket-400713679682-us-west1/services/redata-v3/version-1/source.zip
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 553.0.0
+    run.googleapis.com/operation-id: a1ba6fea-c446-4451-a070-377a4153f5eb
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/invoker-iam-disabled: 'true'
+    run.googleapis.com/maxScale: '20'
+    run.googleapis.com/urls: '["https://redata-v3-400713679682.us-west1.run.app","https://redata-v3-3nthf4hi5a-uw.a.run.app"]'
+spec:
+  template:
+    metadata:
+      labels:
+        client.knative.dev/nonce: vqctxabaus
+        commit-sha: 848ca26e23f81e751b0198fcf18918612cd0771c
+        gcb-build-id: a8b7aa76-5934-418b-a042-0d5ed443aa12
+        gcb-trigger-id: df2fe93e-fc30-48cb-97fc-928a82a1ac3d
+        gcb-trigger-region: global
+        managed-by: gcp-cloud-build-deploy-cloud-run
+        run.googleapis.com/startupProbeType: Default
+      annotations:
+        autoscaling.knative.dev/maxScale: '3'
+        autoscaling.knative.dev/minScale: '0'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 553.0.0
+        run.googleapis.com/sessionAffinity: 'false'
+        run.googleapis.com/base-images: '{"":"us-central1-docker.pkg.dev/serverless-runtimes/google-22/runtimes/nodejs22"}'
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      serviceAccountName: 400713679682-compute@developer.gserviceaccount.com
+      containers:
+      - image: us-west1-docker.pkg.dev/gen-lang-client-0632716855/cloud-run-source-deploy/redataos/redata-v3:848ca26e23f81e751b0198fcf18918612cd0771c
+        ports:
+        - name: http1
+          containerPort: 8080
+        env:
+        - name: API_KEY
+          value: AIzaSyBvwMmo03-4TqQU5j8mG6Ph937hs47kzdo
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        volumeMounts:
+        - name: applet
+          mountPath: /app/dist
+        startupProbe:
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+          tcpSocket:
+            port: 8080
+      volumes:
+      - name: applet
+        csi:
+          driver: gcsfuse.run.googleapis.com
+          readOnly: true
+          volumeAttributes:
+            bucketName: ai-studio-bucket-400713679682-us-west1
+            mountOptions: only-dir=services/redata-v3/version-1/compiled
+      runtimeClassName: run.googleapis.com/linux-base-image-update
+  traffic:
+  - percent: 100
+    latestRevision: true
+status:
+  observedGeneration: 3
+  conditions:
+  - type: Ready
+    status: 'False'
+    reason: HealthCheckContainerError
+    message: "The user-provided container failed to start and listen on the port defined\
+      \ provided by the PORT=8080 environment variable within the allocated timeout.\
+      \ This can happen when the container port is misconfigured or if the timeout\
+      \ is too short. The health check timeout can be extended. Logs for this revision\
+      \ might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=gen-lang-client-0632716855&resource=cloud_run_revision/service_name/redata-v3/revision_name/redata-v3-00003-rln&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22redata-v3%22%0Aresource.labels.revision_name%3D%22redata-v3-00003-rln%22\
+      \ \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start"
+    lastTransitionTime: '2026-01-23T03:43:09.350971Z'
+  - type: BaseImageValidated
+    status: 'True'
+    severity: Info
+  - type: ConfigurationsReady
+    status: 'False'
+    reason: HealthCheckContainerError
+    message: "The user-provided container failed to start and listen on the port defined\
+      \ provided by the PORT=8080 environment variable within the allocated timeout.\
+      \ This can happen when the container port is misconfigured or if the timeout\
+      \ is too short. The health check timeout can be extended. Logs for this revision\
+      \ might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=gen-lang-client-0632716855&resource=cloud_run_revision/service_name/redata-v3/revision_name/redata-v3-00003-rln&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22redata-v3%22%0Aresource.labels.revision_name%3D%22redata-v3-00003-rln%22\
+      \ \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start"
+    lastTransitionTime: '2026-01-23T03:43:09.299198Z'
+  - type: RoutesReady
+    status: 'False'
+    reason: HealthCheckContainerError
+    message: "The user-provided container failed to start and listen on the port defined\
+      \ provided by the PORT=8080 environment variable within the allocated timeout.\
+      \ This can happen when the container port is misconfigured or if the timeout\
+      \ is too short. The health check timeout can be extended. Logs for this revision\
+      \ might contain more information.\n\nLogs URL: https://console.cloud.google.com/logs/viewer?project=gen-lang-client-0632716855&resource=cloud_run_revision/service_name/redata-v3/revision_name/redata-v3-00003-rln&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22redata-v3%22%0Aresource.labels.revision_name%3D%22redata-v3-00003-rln%22\
+      \ \nFor more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start"
+    lastTransitionTime: '2026-01-23T03:43:09.350971Z'
+  latestReadyRevisionName: redata-v3-00002-sx7
+  latestCreatedRevisionName: redata-v3-00003-rln
+  traffic:
+  - revisionName: redata-v3-00002-sx7
+    percent: 100
+    latestRevision: true
+  url: https://redata-v3-3nthf4hi5a-uw.a.run.app
+  address:
+    url: https://redata-v3-3nthf4hi5a-uw.a.run.app
