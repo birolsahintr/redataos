@@ -1,50 +1,61 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Sayfa Ayarları
-st.set_page_config(page_title="Benim AI Projem", layout="centered")
+# 1. Sayfa Ayarları
+st.set_page_config(page_title="Gayrimenkul Asistanı", layout="centered")
+st.title("🏗️ Gayrimenkul Yönetim Asistanı")
 
-# Başlık
-st.title("🤖 Benim Yapay Zeka Asistanım")
-st.write("Aşağıya sorunu yaz, cevaplayayım!")
+# 2. API Anahtarı Kontrolü
+if "GOOGLE_API_KEY" not in st.secrets:
+    st.error("Lütfen .streamlit/secrets.toml dosyasına GOOGLE_API_KEY ekleyin.")
+    st.stop()
 
-# API Anahtarını şifreli kutudan al (Bunu Adım 3'te ayarlayacağız)
 api_key = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=api_key)
 
-# Model Ayarları (Burayı değiştirme)
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 3. Model Ayarları ve SİSTEM TALİMATI (En önemli kısım burası)
+system_instruction = """
+Sen, bulut tabanlı (Cloud-Native) bir Gayrimenkul Portföy ve Talep Yönetim Platformu'nun ana yönetim modülüsün. 
+Cevapların profesyonel, sektöre hakim ve çözüm odaklı olmalı. 
+Kullanıcıya gayrimenkul terimleriyle hitap et.
+"""
 
-# Sohbet geçmişini başlat
+# Modeli talimatla birlikte başlatıyoruz
+model = genai.GenerativeModel(
+    'gemini-1.5-flash',
+    system_instruction=system_instruction
+)
+
+# 4. Sohbet Geçmişini Başlat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-    # --- ÖNEMLİ: SENİN PROMPTUN BURADA DEVREYE GİRİYOR ---
-    # AI Studio'daki "System Instruction" kısmını buraya ekliyoruz.
-    system_instruction = "Sen, bulut tabanlı (Cloud-Native) bir Gayrimenkul Portföy ve Talep Yönetim Platformu nun ana yönetim modülüsün." 
-    # Yukarıdaki tırnak içini kendi projenle değiştir!
-    
-    st.session_state.messages.append({"role": "user", "parts": [system_instruction]})
-    st.session_state.messages.append({"role": "model", "parts": ["Anlaşıldı, talimatlarınıza göre hareket edeceğim."]})
-
-# Eski mesajları ekrana yazdır (Sistem mesajı hariç)
-for message in st.session_state.messages[2:]:
+# 5. Eski Mesajları Ekrana Yazdır
+for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.write(message["parts"][0])
+        # message["parts"] liste olduğu için ilk elemanı alıyoruz
+        st.markdown(message["parts"][0])
 
-# Kullanıcıdan girdi al
-if prompt := st.chat_input("Bir şeyler yaz..."):
+# 6. Kullanıcıdan Girdi Al
+if prompt := st.chat_input("Talep veya sorunuzu girin..."):
     # Kullanıcı mesajını ekrana bas
-    st.chat_message("user").write(prompt)
+    st.chat_message("user").markdown(prompt)
+    
+    # Geçmişe ekle (API formatına uygun: parts bir liste olmalı)
     st.session_state.messages.append({"role": "user", "parts": [prompt]})
 
     # Cevap üret
     try:
-        response = model.generate_content(st.session_state.messages)
-        text_response = response.text
-        
+        with st.spinner("Asistan düşünüyor..."):
+            # Tüm geçmişi modele gönderiyoruz
+            response = model.generate_content(st.session_state.messages)
+            text_response = response.text
+            
         # Cevabı ekrana bas
-        st.chat_message("ai").write(text_response)
+        st.chat_message("ai").markdown(text_response)
+        
+        # Asistan cevabını geçmişe ekle
         st.session_state.messages.append({"role": "model", "parts": [text_response]})
+        
     except Exception as e:
         st.error(f"Bir hata oluştu: {e}")
