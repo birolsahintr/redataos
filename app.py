@@ -1,61 +1,73 @@
 import streamlit as st
 import google.generativeai as genai
+import streamlit.components.v1 as components  # HTML göstermek için gerekli modül
 
 # 1. Sayfa Ayarları
 st.set_page_config(page_title="Gayrimenkul Asistanı", layout="centered")
-st.title("🏗️ Gayrimenkul Yönetim Asistanı")
 
-# 2. API Anahtarı Kontrolü
-if "GOOGLE_API_KEY" not in st.secrets:
-    st.error("Lütfen .streamlit/secrets.toml dosyasına GOOGLE_API_KEY ekleyin.")
-    st.stop()
+# --- MANTIK: GİRİŞ EKRANI MI, SOHBET EKRANI MI? ---
+if "page" not in st.session_state:
+    st.session_state.page = "landing"
 
-api_key = st.secrets["GOOGLE_API_KEY"]
-genai.configure(api_key=api_key)
-
-# 3. Model Ayarları ve SİSTEM TALİMATI (En önemli kısım burası)
-system_instruction = """
-Sen, bulut tabanlı (Cloud-Native) bir Gayrimenkul Portföy ve Talep Yönetim Platformu'nun ana yönetim modülüsün. 
-Cevapların profesyonel, sektöre hakim ve çözüm odaklı olmalı. 
-Kullanıcıya gayrimenkul terimleriyle hitap et.
-"""
-
-# Modeli talimatla birlikte başlatıyoruz
-model = genai.GenerativeModel(
-    'gemini-1.5-flash',
-    system_instruction=system_instruction
-)
-
-# 4. Sohbet Geçmişini Başlat
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# 5. Eski Mesajları Ekrana Yazdır
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        # message["parts"] liste olduğu için ilk elemanı alıyoruz
-        st.markdown(message["parts"][0])
-
-# 6. Kullanıcıdan Girdi Al
-if prompt := st.chat_input("Talep veya sorunuzu girin..."):
-    # Kullanıcı mesajını ekrana bas
-    st.chat_message("user").markdown(prompt)
-    
-    # Geçmişe ekle (API formatına uygun: parts bir liste olmalı)
-    st.session_state.messages.append({"role": "user", "parts": [prompt]})
-
-    # Cevap üret
+# --- DURUM 1: LANDING PAGE (index.html Gösterimi) ---
+if st.session_state.page == "landing":
+    # index.html dosyasını okuyup ekrana basıyoruz
     try:
-        with st.spinner("Asistan düşünüyor..."):
-            # Tüm geçmişi modele gönderiyoruz
-            response = model.generate_content(st.session_state.messages)
-            text_response = response.text
+        with open("index.html", "r", encoding="utf-8") as f:
+            html_code = f.read()
             
-        # Cevabı ekrana bas
-        st.chat_message("ai").markdown(text_response)
+        # HTML'i ekrana bas (height değerini HTML'inizin uzunluğuna göre ayarlayın)
+        components.html(html_code, height=600, scrolling=True)
         
-        # Asistan cevabını geçmişe ekle
-        st.session_state.messages.append({"role": "model", "parts": [text_response]})
-        
-    except Exception as e:
-        st.error(f"Bir hata oluştu: {e}")
+        # Sohbet uygulamasına geçiş butonu
+        # (Butonu ortalamak için kolon kullanıyoruz)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("🤖 Asistanı Başlat", use_container_width=True):
+                st.session_state.page = "chat"
+                st.rerun() # Sayfayı yenileyip chat moduna geçirir
+                
+    except FileNotFoundError:
+        st.error("index.html dosyası bulunamadı! Lütfen app.py ile aynı klasörde olduğundan emin olun.")
+
+# --- DURUM 2: SOHBET UYGULAMASI (Sizin Kodunuz) ---
+elif st.session_state.page == "chat":
+    
+    st.title("🏗️ Gayrimenkul Yönetim Asistanı")
+    
+    # Geri Dön Butonu (İsterseniz ekleyebilirsiniz)
+    if st.button("⬅️ Ana Sayfaya Dön"):
+        st.session_state.page = "landing"
+        st.rerun()
+
+    # --- API ve CHAT KODLARINIZ BURADAN DEVAM EDİYOR ---
+    if "GOOGLE_API_KEY" not in st.secrets:
+        st.error("Lütfen secrets.toml dosyasını kontrol edin.")
+        st.stop()
+
+    api_key = st.secrets["GOOGLE_API_KEY"]
+    genai.configure(api_key=api_key)
+
+    system_instruction = "Sen, bulut tabanlı bir Gayrimenkul Portföy yönetim modülüsün."
+    model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_instruction)
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["parts"][0])
+
+    if prompt := st.chat_input("Sorunuzu girin..."):
+        st.chat_message("user").markdown(prompt)
+        st.session_state.messages.append({"role": "user", "parts": [prompt]})
+
+        try:
+            with st.spinner("Düşünüyor..."):
+                response = model.generate_content(st.session_state.messages)
+                text_response = response.text
+            
+            st.chat_message("ai").markdown(text_response)
+            st.session_state.messages.append({"role": "model", "parts": [text_response]})
+        except Exception as e:
+            st.error(f"Hata: {e}")
