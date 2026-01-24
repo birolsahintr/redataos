@@ -1,5 +1,5 @@
 {
-  "name": "redata-2-0-gayrimenkul-haf-zas-",
+  "name": "redata",
   "description": "RE/MAX kurumsal renkleriyle tasarlanmış, Türkiye mevzuatına uygun, Tapu analizi ve portföy-talep eşleştirme odaklı bulut tabanlı gayrimenkul veri yönetim sistemi.",
   "requestFramePermissions": [
     "camera"
